@@ -21,29 +21,19 @@ void gotoxy(int column, int line)
 }
 void VeManHinh(int x0, int y0, int width, int height)
 {
-    for (int i = x0; i <= x0 + width - 1; i++)
-    {
-        gotoxy(i, y0);
-        cout << '#';
-    }
+    gotoxy(x0, y0);
+    const char WALL_TEXTURE = '#';
+    const string LINE_BREAK = "\n";
 
-    for (int i = x0; i <= x0 + width - 1; i++)
-    {
-        gotoxy(i, y0 + height - 1);
-        cout << '#';
+    string render_str = string(width, WALL_TEXTURE);
+    
+    for (int i = 2; i < height; i++) {
+        render_str += LINE_BREAK + WALL_TEXTURE + string(width - 2, ' ') + WALL_TEXTURE;
     }
+    
+    render_str += LINE_BREAK + string(width, WALL_TEXTURE);
 
-    for (int i = y0; i <= y0 + height - 1; i++)
-    {
-        gotoxy(x0, i);
-        cout << '#';
-    }
-
-    for (int i = y0; i <= y0 + height - 1; i++)
-    {
-        gotoxy(x0 + width - 1, i);
-        cout << '#';
-    }
+    cout << render_str;
 }
 void VeDiem(int x0, int y0, int diem)
 {
