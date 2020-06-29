@@ -1,3 +1,5 @@
+// Chuong trinh chay tren visual studio,
+//dung cac phim mui ten tren ban phim de di chuyen con ran
 #include <iostream>
 #include <windows.h>
 #include <cstdlib>
