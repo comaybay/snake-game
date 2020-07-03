@@ -1,5 +1,3 @@
-// Chuong trinh chay tren visual studio,
-//dung cac phim mui ten tren ban phim de di chuyen con ran
 #include <iostream>
 #include <windows.h>
 #include <cstdlib>
@@ -38,21 +36,17 @@ void VeManHinh(int x0, int y0, int width, int height)
     const string LINE_BREAK = "\n";
     const string OFFSET_X = string(x0, ' ');
 
-    string render_str = repeat(width/2,  WALL_TEXTURE + (string)" ");
-    
+    string render_str = repeat(width / 2, WALL_TEXTURE + (string)" ");
+
     for (int i = 2; i < height; i++) {
-        render_str +=  LINE_BREAK + OFFSET_X + WALL_TEXTURE + string(width - 3, ' ') + WALL_TEXTURE;
+        render_str += LINE_BREAK + OFFSET_X + WALL_TEXTURE + string(width - 3, ' ') + WALL_TEXTURE;
     }
-    
+
     render_str += LINE_BREAK + OFFSET_X + repeat(width / 2, WALL_TEXTURE + (string)" ");
 
     cout << render_str;
 }
-void VeDiem(int x0, int y0, int diem)
-{
-    gotoxy(x0, y0);
-    cout << "Diem: " << diem;
-}
+
 struct Point
 {
     int x, y;
@@ -69,12 +63,23 @@ public:
     ConRan(int a, int b)
     {
         if (a % 2) a++;
-        
+
         ChieuDai = 4;
         Body[0].x = a + 2; Body[0].y = b + 1;
         Body[1].x = a + 4; Body[1].y = b + 1;
         Body[2].x = a + 6; Body[2].y = b + 1;
         Head.x = a + 8; Head.y = b + 1;
+    }
+
+
+    void reset(int a, int b)
+    {
+        ChieuDai = 4;
+        Body[0].x = a + 2; Body[0].y = b + 1;
+        Body[1].x = a + 4; Body[1].y = b + 1;
+        Body[2].x = a + 6; Body[2].y = b + 1;
+        Head.x = a + 8; Head.y = b + 1;
+        huong = 0;
     }
     void Ve();
     void DiChuyen();
@@ -91,7 +96,20 @@ public:
     bool GameOver();
 };
 
+void VeDiem(int x0, int y0, int diem, int level)
+{
+    gotoxy(x0, y0);
+    cout << "Diem: " << diem;
+    gotoxy(x0, y0 + 2);
+    cout << "Level: " << level;
+    gotoxy(x0, y0 + 4);
+    cout << "ESC: THOAT";
+    gotoxy(x0, y0 + 6);
+    cout << "1.TAM DUNG";
+    gotoxy(x0, y0 + 8);
+    cout << "2.RESET";
 
+}
 class Food
 {
 private:
@@ -143,8 +161,8 @@ void ConRan::DiChuyen()
 
     if (huong == 0) Head.x += 2;
     else if (huong == 1) Head.x -= 2;
-    else if (huong == 2) Head.y ++;
-    else if (huong == 3) Head.y --;
+    else if (huong == 2) Head.y++;
+    else if (huong == 3) Head.y--;
 
 }
 
@@ -192,19 +210,22 @@ int main()
 {
     srand((int)time(0));
     int x0 = 2, y0 = 1, width = 40, height = 20;
-    
+
+
     if (x0 % 2) x0++;
     if (width % 2) width++;
 
     ConRan snake(x0 + 1, y0 + 1);
     Food food;
-    int diem = 0;
+    int diem = 0, level = 0;
     food.CreateFood(x0, y0, x0 + width - 1, y0 + height - 1);
-
+    char k;
     while (1)
     {
+        if (level < 8)
+            level = diem / 3;
         VeManHinh(x0, y0, width, height);
-        VeDiem(x0 + width + 5, y0, diem);
+        VeDiem(x0 + width + 5, y0, diem, level);
 
         snake.Ve();
         food.Ve();
@@ -212,11 +233,40 @@ int main()
         //dua con tro ra ngoai map
         gotoxy(x0 + width, y0 + height);
 
+        if (_kbhit())
+        {
+            k = _getch();
+            if (k == 49) system("pause");
+            if (k == 50) snake.reset(x0, y0);
+        }
+
         snake.DiChuyen();
         if (snake.GameOver() || snake.getHeadX() == x0 || snake.getHeadX() == x0 + width - 2 || snake.getHeadY() == y0 || snake.getHeadY() == y0 + height - 1)
         {
             system("cls");
-            break;
+            cout << "\n\t\tGAME OVER";
+            cout << "\n\n\n\t\t1.CHOI TIEP";
+            cout << "\n\t\tESC.THOAT\n";
+            while (1)
+            {
+                if (_kbhit())
+                {
+                    k = _getch();
+                    if (k == 27) {
+                        system("cls");
+                        return 0;
+                    }
+
+                    if (k == 49) {
+
+                        break;
+                    }
+
+                }
+
+                snake.reset(x0, y0);
+            }
+
         }
 
         if (snake.getHeadX() == food.getX() && snake.getHeadY() == food.getY())
@@ -229,11 +279,10 @@ int main()
             food.CreateFood(x0, y0, width, height);
         }
 
-        Sleep(150);
+        Sleep(200 - level * 25);
         system("cls");
     }
 
     cout << "Game Over";
     return 0;
 }
-//
