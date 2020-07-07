@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
 #define RED     "\033[31m"      /* Red */
@@ -67,46 +68,60 @@ void VeManHinh(int x0, int y0, int width, int height)
 struct Point
 {
     int x, y;
+    Point(int x, int y) : x(x), y(y) {};
+    Point() : x(-1), y(-1) {};
 };
 
 
 class ConRan
 {
 private:
-    Point Head, Body[100];
+    vector<Point> Body;
+    Point* head;
     int ChieuDai;
-    int huong = 0;
+    int huong;
 public:
-    ConRan(int a, int b)
-    {
-        if (a % 2) a++;
+    ConRan(int x0, int y0)
+    {   
+        if (x0 % 2) x0++;
 
-        ChieuDai = 4;
-        Body[0].x = a + 2; Body[0].y = b + 1;
-        Body[1].x = a + 4; Body[1].y = b + 1;
-        Body[2].x = a + 6; Body[2].y = b + 1;
-        Head.x = a + 8; Head.y = b + 1;
-    }
+        Body.reserve(100);
+        ChieuDai = 5;
+        
+        for (int i = 0; i < ChieuDai; i++) {
+            Body.emplace_back(x0 + 2 + i * 2, y0 + 1);
+        }
 
-
-    void reset(int a, int b)
-    {
-        ChieuDai = 4;
-        Body[0].x = a + 2; Body[0].y = b + 1;
-        Body[1].x = a + 4; Body[1].y = b + 1;
-        Body[2].x = a + 6; Body[2].y = b + 1;
-        Head.x = a + 8; Head.y = b + 1;
+        head = &Body.back();
         huong = 0;
     }
-    void Ve();
-    void DiChuyen();
-    int getHeadX()
+
+    void reset(int x0, int y0)
     {
-        return Head.x;
+        if (x0 % 2) x0++;
+
+        Body.clear();
+        ChieuDai = 5;
+
+        for (int i = 0; i < ChieuDai; i++) {
+            Body.emplace_back(x0 + 2 + i * 2, y0 + 1);
+        }
+        head = &Body.back();
+
+        huong = 0;
     }
-    int getHeadY()
+    void Ve() const;
+    void DiChuyen();
+    const vector<Point>& GetBody() const {
+        return Body;
+    }
+    int getHeadX() const
     {
-        return Head.y;
+        return Body.back().x;
+    }
+    int getHeadY() const
+    {
+        return Body.back().y;
     }
 
     void AnDiem(int foodx, int foody);
@@ -133,27 +148,39 @@ private:
     Point f;
 public:
 
-    int getX()
+    int getX() const
     {
         return f.x;
     }
-    int getY()
+    int getY() const
     {
         return f.y;
     }
-    void CreateFood(int a, int b, int c, int d);
-    void Ve();
+    void CreateFood(int x0, int y0, int x, int y, const ConRan& snake);
+    void Ve() const;
+};
+
+class CollisionChecker {
+public:
+    static bool isSnakeCollidedWithFood(const ConRan& snake, const Food& food) {
+        for (const Point& p : snake.GetBody()) {
+            if (food.getX() == p.x && food.getY() == p.y) 
+                return true;
+        }
+        return false;
+
+    }
 };
 
 //cac ham cua class ConRan
-void ConRan::Ve()
+void ConRan::Ve() const
 {
     for (int i = 0; i < ChieuDai - 1; i++)
     {
         gotoxy(Body[i].x, Body[i].y);
         cout << GREEN<< 'o'<<RESET;
     }
-    gotoxy(Head.x, Head.y);
+    gotoxy(getHeadX(), getHeadY());
     cout <<YELLOW<< '+'<<RESET;
 }
 
@@ -173,30 +200,33 @@ void ConRan::DiChuyen()
     for (int i = 0; i < ChieuDai - 2; i++)
         Body[i] = Body[i + 1];
 
-    Body[ChieuDai - 2].x = Head.x;
-    Body[ChieuDai - 2].y = Head.y;
+    Body[ChieuDai - 2].x = head->x;
+    Body[ChieuDai - 2].y = head->y;
 
-    if (huong == 0) Head.x += 2;
-    else if (huong == 1) Head.x -= 2;
-    else if (huong == 2) Head.y++;
-    else if (huong == 3) Head.y--;
+    if (huong == 0) head->x += 2;
+    else if (huong == 1) head->x -= 2;
+    else if (huong == 2) head->y++;
+    else if (huong == 3) head->y--;
 
 }
 
 void ConRan::AnDiem(int foodx, int foody)
 {
     ChieuDai++;
-    Body[ChieuDai - 2].x = Head.x;
-    Body[ChieuDai - 2].y = Head.y;
-    Head.x = foodx;
-    Head.y = foody;
+    Body.emplace_back(head->x, head->y);
 
+    for (int i = ChieuDai - 1; i >= 1; i--) {
+        Body[i].x = Body[i - 1].x;
+        Body[i].y = Body[i - 1].y;
+    }
+
+    head = &Body.back();
 }
 bool ConRan::GameOver()
 {
     for (int i = 0; i < ChieuDai - 1; i++)
     {
-        if (Body[i].x == Head.x && Body[i].y == Head.y)
+        if (Body[i].x == head->x && Body[i].y == head->y)
             return true;
     }
     return false;
@@ -204,57 +234,71 @@ bool ConRan::GameOver()
 
 
 //Cac ham cua class Food
-void Food::CreateFood(int a, int b, int c, int d)
+void Food::CreateFood(int x0, int y0, int x, int y, const ConRan& snake)
 {
-    int rx = random(a + 2, c - 2);
-    int ry = random(b + 2, d - 2);
+    do {
+    //+2, -4, +1, -2 de random cho ra toa do trong map tro choi (khong tinh vien ben ngoai)
+        f.x = random(x0 + 2, x0 + x - 4);
+        f.y = random(y0 + 1, y0 + y - 2);
+        
+        if (f.x % 2) {
+            f.x++;
+        }
 
-    if (rx % 2) {
-        rx = (rx == c - 2) ? rx - 1 : rx + 1;
-    }
-
-    f.x = rx;
-    f.y = ry;
+    //neu vi tri moi dung con ran thi doi lai vi tri
+    } while (CollisionChecker::isSnakeCollidedWithFood(snake, *this));
 }
-void Food::Ve()
+
+void Food::Ve() const
 {
     gotoxy(f.x, f.y);
     cout <<RED << '*'<<RESET;
 }
 
+void RenderScreen(int x0, int y0, int width, int height, int diem, int level, const ConRan& snake, const Food& food) {
+    VeManHinh(x0, y0, width, height);
+    VeDiem(x0 + width + 5, y0, diem, level);
+
+    snake.Ve();
+    food.Ve();
+
+    //dua con tro ra ngoai map
+    gotoxy(x0 + width, y0 + height);
+}
+
+void ResetGame(int x0, int y0, int width, int height, int& diem, int& level, ConRan& snake, Food& food) {
+    diem = 0;
+    level = 0;
+    snake.reset(x0 + 1, y0 + 1);
+    food.CreateFood(x0, y0, width, height, snake);
+}
 
 int main()
 {
     srand((int)time(0));
     int x0 = 2, y0 = 1, width = 40, height = 20;
 
-
     if (x0 % 2) x0++;
     if (width % 2) width++;
 
-    ConRan snake(x0 + 1, y0 + 1);
+    ConRan snake(x0 + 2, y0 + 1);
     Food food;
     int diem = 0, level = 0;
-    food.CreateFood(x0, y0, x0 + width - 1, y0 + height - 1);
+    food.CreateFood(x0, y0, width, height, snake);
     char k;
-    while (1)
+    while (true)
     {
+
         if (level < 8)
             level = diem / 3;
-        VeManHinh(x0, y0, width, height);
-        VeDiem(x0 + width + 5, y0, diem, level);
-
-        snake.Ve();
-        food.Ve();
-
-        //dua con tro ra ngoai map
-        gotoxy(x0 + width, y0 + height);
+        
+        RenderScreen(x0, y0, width, height, diem, level, snake, food);
 
         if (_kbhit())
         {
             k = _getch();
             if (k == 49) system("pause");
-            if (k == 50) snake.reset(x0, y0);
+            if (k == 50) ResetGame(x0, y0, width, height, diem, level, snake, food);
             if (k == 27) break;
         }
 
@@ -282,7 +326,7 @@ int main()
 
                 }
 
-                snake.reset(x0, y0);
+                ResetGame(x0, y0, width, height, diem, level, snake, food);
             }
 
         }
@@ -294,7 +338,7 @@ int main()
                 break;
 
             snake.AnDiem(food.getX(), food.getY());
-            food.CreateFood(x0, y0, width, height);
+            food.CreateFood(x0, y0, width, height, snake);
         }
         
         Sleep(200 - level * 25);
