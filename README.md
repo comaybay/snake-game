@@ -12,3 +12,5 @@ Nguyễn Thoại Linh
 Giảng viên:
 Nguyễn Văn Toàn
 ```
+## Hướng dẫn sử dụng
+tải source code về run. Sử dụng các phím mũi tên để di chuyển ăn các điễm xuất hiện ngẫu nhiên trên màn hình.
