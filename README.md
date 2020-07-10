@@ -13,4 +13,6 @@ Giảng viên:
 Nguyễn Văn Toàn
 ```
 ## Hướng dẫn sử dụng
-tải source code về run. Sử dụng các phím mũi tên để di chuyển ăn các điễm xuất hiện ngẫu nhiên trên màn hình.
+tải source code về run trên bất cứ compiler của C++ ( tốt nhất là Visual studio)
+
+Sử dụng các phím mũi tên để di chuyển ăn các điễm xuất hiện ngẫu nhiên trên màn hình.
